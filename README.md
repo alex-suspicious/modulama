@@ -2,7 +2,7 @@
   <br>
   <a href="https://github.com/alex-suspicious/modulama"><img src="https://i.imgur.com/WckH1kj.png" alt="Modulama - Discord Bot"></a>
   <br>
-  Red Discord Bot
+  Modulama Discord Bot
   <br>
 </h1>
 
