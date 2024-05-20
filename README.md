@@ -1,7 +1,6 @@
 <h1 align="center">
-  <br>
-  <a href="https://github.com/alex-suspicious/modulama"><img src="https://i.imgur.com/WckH1kj.png" alt="Modulama - Discord Bot"></a>
-  <br>
+  <a href="https://github.com/alex-suspicious/modulama"><img src="https://i.imgur.com/WckH1kj.png" width="240" alt="Modulama - Discord Bot"></a>
+  <br><br>
   Modulama Discord Bot
   <br>
 </h1>
