@@ -1,6 +1,8 @@
 <h1 align="center">
   <br>
-  Modulama
+  <a href="https://github.com/alex-suspicious/modulama"><img src="https://i.imgur.com/WckH1kj.png" alt="Modulama - Discord Bot"></a>
+  <br>
+  Red Discord Bot
   <br>
 </h1>
 
@@ -13,4 +15,4 @@
 </p>
 
 # Overview
-Moduloama is a fully modular bot
+Modulama is a fully modular bot
