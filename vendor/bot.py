@@ -1,21 +1,17 @@
 import vendor.env as env
 from typing import Optional
 import discord
-from discord import app_commands
 from vendor.data import createDBFolder
-from app.Models.user import user
-
-MY_GUILD = discord.Object(id=env.get("APP_DEBUG_SERVER"))  # replace with your guild id
+from vendor.cog import load as cogLoad
 
 
 class MyClient(discord.Client):
     def __init__(self, *, intents: discord.Intents):
         super().__init__(intents=intents)
         createDBFolder()
-        self.tree = app_commands.CommandTree(self)
+        cogLoad(self)
 
-    async def setup_hook(self):
-        self.tree.copy_global_to(guild=MY_GUILD)
+    #async def setup_hook(self):
         #await self.tree.sync(guild=MY_GUILD)
 
 
