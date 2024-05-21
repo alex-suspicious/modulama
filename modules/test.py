@@ -1,19 +1,8 @@
-import discord
-from discord.ext import commands
-from discord_slash import cog_ext, SlashContext
-
 
 class test(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+    async def ping(self, interaction: discord.Interaction):
+        curUser = user().where( "discord_id",interaction.user.id, create=True ).first()
+        curUser.messages += 1
+        curUser.save()
 
-    @commands.command()
-    async def ping(self, ctx):
-        await ctx.send('Pong!')
-
-    @cog_ext.cog_slash(name="hello", description="Say hello!")
-    async def hello(self, ctx: SlashContext):
-        await ctx.send('Hello, World!')
-
-async def setup(bot):
-    await bot.add_cog(test(bot))
+        await interaction.response.send_message(f'Messages: {curUser.messages}')

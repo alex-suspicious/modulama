@@ -36,3 +36,4 @@ async def count(interaction: discord.Interaction):
     await interaction.response.send_message(f'Messages: {curUser.messages}')
 
 client.run(env.get("APP_TOKEN"))
+
