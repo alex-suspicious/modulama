@@ -1,11 +1,18 @@
 import glob
 import discord
 from discord import app_commands
+from discord.ext import commands
 import vendor.env as env
 import inspect
+import os
+import time
 
 _groups = {}
 _session = {}
+
+_cached_env = {}
+_cached_code = {}
+_cached_edit = {}
 
 DEBUG_SERVER = discord.Object(id=env.get("APP_DEBUG_SERVER"))
 
@@ -16,12 +23,30 @@ async def commandNotFound(interaction: discord.Interaction, *args):
 		await interaction.response.send_message('`Command not found 🔍🐑\nThis command may be outdated :warning:, please try again in a few minutes 🕰️\nOr make a report to the bot owner 📝`', ephemeral=True)
 
 def commandsFromFile(path):
+	ti_m = os.path.getmtime(path)
+	m_ti = time.ctime(ti_m)
+
+	if( path in _cached_edit ):
+		if( m_ti == _cached_edit[path] ):
+			return _cached_env[path]
+
 	file = open(path,"r")
 	code = file.read()
 	file.close()
 
 	_local_env = {}
 	exec(code, globals(), _local_env)
+
+	_globals_env = {}
+	_globals_env.update( globals() )
+	_globals_env.update( _local_env )
+	_local_env = {}
+
+	exec(code, _globals_env, _local_env)
+
+	_cached_edit[path] = m_ti
+	_cached_env[path] = _local_env
+	_cached_code[path] = code
 	return _local_env
 
 def functionFromClassFile(class_file, class_obj, func_name):
@@ -42,14 +67,17 @@ async def load(client):
 	pyfiles = glob.glob("modules/*.py")
 
 	for disCommand in pyfiles:
-		commands = commandsFromFile(disCommand)
-		names = list(commands.keys())
+		commandsFile = commandsFromFile(disCommand)
+		names = list(commandsFile.keys())
+		sources = _cached_code[disCommand].split("\n")
 
 		for x in range(len(names)):
-			if( not isinstance(commands[names[x]], type) ):
+			if( not isinstance(commandsFile[names[x]], type) ):
+				continue
+			if( "slot " not in str(commandsFile[names[x]].__init__) ):
 				continue
 
-			commandsList = [ x for x in dir( commands[names[x]]() ) if "__" not in x ]
+			commandsList = [ x for x in dir( commandsFile[names[x]]() ) if "__" not in x ]
 
 			if( names[x] not in _groups ):
 				_groups[ names[x] ] = app_commands.Group(name=names[x], description="none")
@@ -57,13 +85,30 @@ async def load(client):
 
 
 			for y in range( len(commandsList) ):
-				func = getattr(commands[names[x]](), commandsList[y])
+				func = getattr(commandsFile[names[x]](), commandsList[y])
 				if( callable( func ) ):
 					attributes = str( inspect.signature(func))
 					attributes_inside = f"({','.join(list(inspect.signature(func).parameters.keys()))})"
 
-					exec( f"""
+					condidate = 0
+					for g in range( len(sources) ):
+						if( f"async def {commandsList[y]}" in sources[g] ):
+							condidate = g
+							break
+
+					decorations = []
+					if( condidate ):
+						for g in range(condidate-1,0, -1):
+							if( "@staticmethod" in sources[g] ):
+								break
+							elif( sources[g] ):
+								decorations.append( sources[g].replace("    ","") )
+							
+						decorations.reverse()
+
+					code = f"""
 @_groups["{names[x]}"].command(name = "{commandsList[y]}", description = "none")
+"""+("\n".join(decorations))+f"""
 async def {commandsList[y]}{attributes}:
 	if( interaction.user.id not in _session ):
 		_session[interaction.user.id] = {{}}
@@ -79,10 +124,8 @@ async def {commandsList[y]}{attributes}:
 			else:
 				await interaction.response.send_message(f"```Error occured in the '{disCommand}' module 💻🔍🐑\\n{{error}}```", ephemeral=True)
 		del _session[interaction.user.id]["wait"]
-					""", globals(), locals() )
-					#	Yes, i think it is not great to read the file with code everytime you run the command.
-					#	But on the other hand, you can freely edit, install, remove your commands in real time
-					#	With big changes like adding new commands, or changing command names, you can use /update to update the tree
+					"""
+					exec( code, globals(), locals() )
 
 	client.tree.copy_global_to(guild=DEBUG_SERVER)
 	await client.tree.sync(guild=DEBUG_SERVER)
