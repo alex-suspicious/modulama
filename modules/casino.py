@@ -17,7 +17,7 @@ class casino:
     @staticmethod
     async def spin(interaction: discord.Interaction, amount: int):
         global user, spin_numbers, asyncio, random, discord
-
+        
         userData = user().where( "discord_id",interaction.user.id, create=True ).first()
         if( userData.money - amount < 0 ):
             embed = discord.Embed(title="Transaction failed", description="", color = discord.Color.from_rgb(255, 219, 148) )
@@ -37,6 +37,7 @@ class casino:
         embed.set_image( url = "https://i.imgur.com/lWwjZOv.gif" )
         await interaction.response.send_message(embed=embed)
         await asyncio.sleep(4)
+        
 
         random_number = random.randint(0,8)
 

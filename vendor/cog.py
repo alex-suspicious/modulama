@@ -9,7 +9,7 @@ _session = {}
 
 DEBUG_SERVER = discord.Object(id=env.get("APP_DEBUG_SERVER"))
 
-async def commandNotFound(interaction: discord.Interaction):
+async def commandNotFound(interaction: discord.Interaction, *args):
 	if( str(interaction.user.id) == str(env.get("APP_OWNER")) ):
 		await interaction.response.send_message('`Command not found 🔍🐑\nThis command may be outdated, 💻 use /update`', ephemeral=True)
 	else:
