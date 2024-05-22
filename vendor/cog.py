@@ -4,6 +4,7 @@ from discord import app_commands
 import vendor.env as env
 
 _groups = {}
+_group_env = {}
 
 DEBUG_SERVER = discord.Object(id=env.get("APP_DEBUG_SERVER"))
 
@@ -11,10 +12,16 @@ def commandsFromFile(path):
 	file = open(path,"r")
 	code = file.read()
 	file.close()
-	local = {}
 
-	exec(code,globals(), local)
-	return local
+	if( path not in _group_env ):
+		_group_env[path] = {}
+
+
+	_local_env = globals()
+	_local_env.update( _group_env[path] )
+
+	exec(code, globals(), _group_env[path])
+	return _group_env[path]
 
 async def load(client):
 	global _groups
@@ -32,6 +39,9 @@ async def load(client):
 		names = list(commands.keys())
 
 		for x in range(len(names)):
+			if( not isinstance(commands[names[x]], type) ):
+				continue
+
 			commandsList = [ x for x in dir( commands[names[x]]() ) if "__" not in x ]
 
 			if( names[x] not in _groups ):
@@ -53,4 +63,4 @@ async def {commandsList[y]}(interaction: discord.Interaction):
 					#	TODO: Check if command exist, and return error to end user if not.
 
 	client.tree.copy_global_to(guild=DEBUG_SERVER)
-	await client.tree.sync(guild=DEBUG_SERVER)
+	#await client.tree.sync(guild=DEBUG_SERVER)

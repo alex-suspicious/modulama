@@ -1,10 +1,10 @@
+from app.Models.user import user
+from vendor.bot import version
 
 #   Example of Database interaction
 class counter:
     @staticmethod
     async def add(interaction: discord.Interaction):
-        from app.Models.user import user
-
         curUser = user().where( "discord_id",interaction.user.id, create=True ).first()
         curUser.messages += 1
         curUser.save()
@@ -13,7 +13,6 @@ class counter:
 
     @staticmethod
     async def result(interaction: discord.Interaction):
-        from app.Models.user import user
         curUser = user().where( "discord_id",interaction.user.id, create=True ).first()
 
         await interaction.response.send_message(f'Counted: {curUser.messages}')
@@ -24,5 +23,4 @@ class counter:
 class system:
     @staticmethod
     async def info(interaction: discord.Interaction):
-        from vendor.bot import version
         await interaction.response.send_message(f'```I am a Modulama 🐑\nVersion{version}```')
