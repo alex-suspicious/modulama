@@ -9,7 +9,6 @@ class MyClient(discord.Client):
     def __init__(self, *, intents: discord.Intents):
         super().__init__(intents=intents)
         createDBFolder()
-        
 
     async def setup_hook(self):
         await cogLoad(self)

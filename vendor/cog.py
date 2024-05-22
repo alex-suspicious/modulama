@@ -5,6 +5,7 @@ import vendor.env as env
 
 _groups = {}
 _group_env = {}
+_session = {}
 
 DEBUG_SERVER = discord.Object(id=env.get("APP_DEBUG_SERVER"))
 
@@ -15,7 +16,6 @@ def commandsFromFile(path):
 
 	if( path not in _group_env ):
 		_group_env[path] = {}
-
 
 	_local_env = globals()
 	_local_env.update( _group_env[path] )
@@ -55,12 +55,18 @@ async def load(client):
 					exec( f"""
 @_groups["{names[x]}"].command(name = "{commandsList[y]}", description = "none")
 async def {commandsList[y]}(interaction: discord.Interaction):
-	await getattr( commandsFromFile("{disCommand}")["{names[x]}"], "{commandsList[y]}")( interaction )
+	if( interaction.user.id not in _session ):
+		_session[interaction.user.id] = {{}}
+	if( "wait" in _session[interaction.user.id] ):
+		await interaction.response.send_message("Wait untill the previous command stops 🕰️🐑", ephemeral=True)
+	else:
+		_session[interaction.user.id]["wait"] = True
+		await getattr( commandsFromFile("{disCommand}")["{names[x]}"], "{commandsList[y]}")( interaction )
+		del _session[interaction.user.id]["wait"]
 					""", globals(), locals() )
 					#	Yes, i think it is not great to read the file with code everytime you run the command.
 					#	But on the other hand, you can freely edit, install, remove your commands in real time
 					#	With big changes like adding new commands, or changing command names, you can use /update to update the tree
-					#	TODO: Check if command exist, and return error to end user if not.
 
 	client.tree.copy_global_to(guild=DEBUG_SERVER)
-	#await client.tree.sync(guild=DEBUG_SERVER)
+	await client.tree.sync(guild=DEBUG_SERVER)
