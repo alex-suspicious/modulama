@@ -1,10 +1,18 @@
 from vendor.cog import load
 from vendor.bot import client
+from vendor.bot import version
 
-#   Updating all the cog commands
 class system:
     @staticmethod
     async def update(interaction: discord.Interaction):
+        global load, client
+
         await interaction.response.send_message(f'`🥚 Updating...`')
         await load(client) 
         await interaction.edit_original_response(content="`🐑 Updated`")
+
+    @staticmethod
+    async def info(interaction: discord.Interaction):
+        global version
+
+        await interaction.response.send_message(f'```I am a Modulama 🐑\nVersion {version}```')

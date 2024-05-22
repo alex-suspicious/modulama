@@ -18,6 +18,9 @@ class data:
 	variables = {}
 
 	def __init__(self, table, attributes):
+		self.createItem = False
+		self.whereConn = []
+		self.variables = {}
 		self.table = table
 		self.attributes = attributes
 		self.keys = list(self.attributes.keys())
@@ -125,7 +128,7 @@ class data:
 
 	def first(self):
 		rows = self.cur.execute(f"SELECT {','.join(self.keys)} FROM ({self.table}){self.getWhereQuery()}" ).fetchall()
-
+		print(rows)
 		if( len(rows) > 0 ):
 			self.update(rows)
 		elif( self.createItem ):

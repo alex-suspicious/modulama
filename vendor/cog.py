@@ -2,6 +2,7 @@ import glob
 import discord
 from discord import app_commands
 import vendor.env as env
+import inspect
 
 _groups = {}
 _session = {}
@@ -9,17 +10,17 @@ _session = {}
 DEBUG_SERVER = discord.Object(id=env.get("APP_DEBUG_SERVER"))
 
 async def commandNotFound(interaction: discord.Interaction):
-	if( interaction.user.id == env.get("APP_OWNER") ):
-		await interaction.response.send_message('`Command not found 🔍🐑\nThis command may be outdated, please try again in a few minutes 🕰️\nOr make a report to the bot owner ✍️`', ephemeral=True)
+	if( str(interaction.user.id) == str(env.get("APP_OWNER")) ):
+		await interaction.response.send_message('`Command not found 🔍🐑\nThis command may be outdated, 💻 use /update`', ephemeral=True)
 	else:
-		await interaction.response.send_message('`Command not found 🔍🐑\nThis command may be outdated, use /update`', ephemeral=True)
+		await interaction.response.send_message('`Command not found 🔍🐑\nThis command may be outdated :warning:, please try again in a few minutes 🕰️\nOr make a report to the bot owner 📝`', ephemeral=True)
 
 def commandsFromFile(path):
 	file = open(path,"r")
 	code = file.read()
 	file.close()
 
-	_local_env = globals()
+	_local_env = {}
 	exec(code, globals(), _local_env)
 	return _local_env
 
@@ -37,7 +38,7 @@ async def load(client):
 		_groups = {}
 	else:
 		client.tree = app_commands.CommandTree(client)
-	
+
 	pyfiles = glob.glob("modules/*.py")
 
 	for disCommand in pyfiles:
@@ -56,18 +57,21 @@ async def load(client):
 
 
 			for y in range( len(commandsList) ):
+				func = getattr(commands[names[x]](), commandsList[y])
+				if( callable( func ) ):
+					attributes = str( inspect.signature(func))
+					attributes_inside = f"({','.join(list(inspect.signature(func).parameters.keys()))})"
 
-				if( callable( getattr(commands[names[x]](), commandsList[y]) ) ):
 					exec( f"""
 @_groups["{names[x]}"].command(name = "{commandsList[y]}", description = "none")
-async def {commandsList[y]}(interaction: discord.Interaction):
+async def {commandsList[y]}{attributes}:
 	if( interaction.user.id not in _session ):
 		_session[interaction.user.id] = {{}}
 	if( "wait" in _session[interaction.user.id] ):
 		await interaction.response.send_message("Wait untill the previous command stops 🕰️🐑", ephemeral=True)
 	else:
 		_session[interaction.user.id]["wait"] = True
-		await functionFromClassFile("{disCommand}", "{names[x]}", "{commandsList[y]}")( interaction )
+		await functionFromClassFile("{disCommand}", "{names[x]}", "{commandsList[y]}"){attributes_inside}
 		del _session[interaction.user.id]["wait"]
 					""", globals(), locals() )
 					#	Yes, i think it is not great to read the file with code everytime you run the command.
