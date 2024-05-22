@@ -68,10 +68,16 @@ async def {commandsList[y]}{attributes}:
 	if( interaction.user.id not in _session ):
 		_session[interaction.user.id] = {{}}
 	if( "wait" in _session[interaction.user.id] ):
-		await interaction.response.send_message("Wait untill the previous command stops 🕰️🐑", ephemeral=True)
+		await interaction.response.send_message("`Wait untill the previous command stops 🕰️🐑`", ephemeral=True)
 	else:
 		_session[interaction.user.id]["wait"] = True
-		await functionFromClassFile("{disCommand}", "{names[x]}", "{commandsList[y]}"){attributes_inside}
+		try:
+			await functionFromClassFile("{disCommand}", "{names[x]}", "{commandsList[y]}"){attributes_inside}
+		except Exception as error:
+			if( interaction.response.is_done() ):
+				await interaction.edit_original_response(content=f"```Error occured in the '{disCommand}' module 💻🔍🐑\\n{{error}}```", embed=None)
+			else:
+				await interaction.response.send_message(f"```Error occured in the '{disCommand}' module 💻🔍🐑\\n{{error}}```", ephemeral=True)
 		del _session[interaction.user.id]["wait"]
 					""", globals(), locals() )
 					#	Yes, i think it is not great to read the file with code everytime you run the command.
@@ -79,4 +85,4 @@ async def {commandsList[y]}{attributes}:
 					#	With big changes like adding new commands, or changing command names, you can use /update to update the tree
 
 	client.tree.copy_global_to(guild=DEBUG_SERVER)
-	await client.tree.sync(guild=DEBUG_SERVER)
+	#await client.tree.sync(guild=DEBUG_SERVER)
