@@ -85,4 +85,4 @@ async def {commandsList[y]}{attributes}:
 					#	With big changes like adding new commands, or changing command names, you can use /update to update the tree
 
 	client.tree.copy_global_to(guild=DEBUG_SERVER)
-	#await client.tree.sync(guild=DEBUG_SERVER)
+	await client.tree.sync(guild=DEBUG_SERVER)
