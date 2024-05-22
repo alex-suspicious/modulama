@@ -4,24 +4,30 @@ from discord import app_commands
 import vendor.env as env
 
 _groups = {}
-_group_env = {}
 _session = {}
 
 DEBUG_SERVER = discord.Object(id=env.get("APP_DEBUG_SERVER"))
+
+async def commandNotFound(interaction: discord.Interaction):
+	if( interaction.user.id == env.get("APP_OWNER") ):
+		await interaction.response.send_message('`Command not found 🔍🐑\nThis command may be outdated, please try again in a few minutes 🕰️\nOr make a report to the bot owner ✍️`', ephemeral=True)
+	else:
+		await interaction.response.send_message('`Command not found 🔍🐑\nThis command may be outdated, use /update`', ephemeral=True)
 
 def commandsFromFile(path):
 	file = open(path,"r")
 	code = file.read()
 	file.close()
 
-	if( path not in _group_env ):
-		_group_env[path] = {}
-
 	_local_env = globals()
-	_local_env.update( _group_env[path] )
+	exec(code, globals(), _local_env)
+	return _local_env
 
-	exec(code, globals(), _group_env[path])
-	return _group_env[path]
+def functionFromClassFile(class_file, class_obj, func_name):
+	_local_env = commandsFromFile(class_file)
+	if( hasattr(_local_env[class_obj], func_name) ):
+		return getattr( _local_env[class_obj], func_name)
+	return commandNotFound
 
 async def load(client):
 	global _groups
@@ -61,7 +67,7 @@ async def {commandsList[y]}(interaction: discord.Interaction):
 		await interaction.response.send_message("Wait untill the previous command stops 🕰️🐑", ephemeral=True)
 	else:
 		_session[interaction.user.id]["wait"] = True
-		await getattr( commandsFromFile("{disCommand}")["{names[x]}"], "{commandsList[y]}")( interaction )
+		await functionFromClassFile("{disCommand}", "{names[x]}", "{commandsList[y]}")( interaction )
 		del _session[interaction.user.id]["wait"]
 					""", globals(), locals() )
 					#	Yes, i think it is not great to read the file with code everytime you run the command.
